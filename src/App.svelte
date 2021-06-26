@@ -68,6 +68,9 @@
   const _pocus: string = "POCUS";
   const _paused: string = "PAUSED";
   const _break: string = "BREAK";
+  const second = 1000;
+  const minute = second * 60;
+  const hour = minute * 60;
   let title: string = _pocus;
   let isPaused = true;
   let isBreak = false;
@@ -89,11 +92,6 @@
   }
 
   function startTimer(minutes: number, seconds: number): void {
-    const second = 1000;
-    const minute = second * 60;
-    const hour = minute * 60;
-    const day = hour * 24;
-
     let startTime = new Date().toString();
     let countDown =
       new Date(startTime).getTime() + minutes * minute + seconds * second;
@@ -104,30 +102,35 @@
       remainingMins = pad(Math.floor((distance % hour) / minute));
       remainingSecs = pad(Math.floor((distance % minute) / second));
 
+      workoutWheelPercentage();
+
       //do something later when date is reached
       if (distance < 0 || isPaused) {
         clearInterval(x);
 
         if (distance < 0) {
-          remainingMins = pad(parseInt(getCookie(pocusMinsCookie)));
-          remainingSecs = pad(parseInt(getCookie(pocusSecsCookie)));
+          remainingMins = pad(settings.pocus_pocusMinutes);
+          remainingSecs = pad(settings.pocus_pocusSeconds);
           title = _pocus;
           isBreak = !isBreak;
           isPaused = true;
           playPing();
+          saveSettings();
 
           if (isBreak) {
             pocusCount += 1;
             title = _break;
-            remainingMins = pad(parseInt(getCookie(breakMinsCookie)));
-            remainingSecs = pad(parseInt(getCookie(breakSecsCookie)));
+            remainingMins = pad(settings.pocus_breakMinutes);
+            remainingSecs = pad(settings.pocus_breakSeconds);
 
-            if (pocusCount == parseInt(getCookie(numTillLongBreakCookie))) {
+            if (pocusCount == settings.pocus_numTillLongBreak) {
               pocusCount = 0;
-              remainingMins = pad(parseInt(getCookie(longBreakMinsCookie)));
-              remainingSecs = pad(parseInt(getCookie(longBreakSecsCookie)));
+              remainingMins = pad(settings.pocus_longBreakMinutes);
+              remainingSecs = pad(settings.pocus_longBreakSeconds);
             }
           }
+
+          workoutWheelPercentage();
         }
       }
       //seconds
@@ -145,16 +148,37 @@
   }
 
   function saveSettings() {
-    document.getElementById("settings").classList.add("settings__hidden");
-    setTimeout(() => {
-      for (const key in settings) {
-        setCookie(key, settings[key]);
-      }
-    }, 1000);
+    for (const key in settings) {
+      setCookie(key, settings[key]);
+    }
   }
 
   function toggleSettingsVisible() {
     settingsVisible = !settingsVisible;
+  }
+
+  function calculatePercentageDone(minutes: number, seconds: number): number {
+    const settingsMins = !isBreak
+      ? settings.pocus_pocusMinutes
+      : settings.pocus_breakMinutes;
+    const settingsSecs = !isBreak
+      ? settings.pocus_pocusSeconds
+      : settings.pocus_breakSeconds;
+
+    return (
+      ((minutes * minute + seconds * second) /
+        (settingsMins * minute + settingsSecs * second)) *
+      100
+    );
+  }
+
+  function workoutWheelPercentage() {
+    document.getElementById("timer").style.background = `conic-gradient(var(${
+      !isBreak ? "--clr-pocus" : "--clr-break"
+    }) ${calculatePercentageDone(
+      parseInt(remainingMins),
+      parseInt(remainingSecs)
+    )}%, var(--clr-mute) 0)`;
   }
   //#endregion Helper Functions
 </script>
@@ -162,6 +186,7 @@
 <main>
   <h1 class={isPaused ? "" : "hidden"}>{title}</h1>
   <div
+    id="timer"
     class={isPaused
       ? isBreak
         ? "timer timer--break"
@@ -199,7 +224,7 @@
     class={settingsVisible ? "settings" : "settings settings__hidden"}
   >
     <h2>Settings</h2>
-    <form on:submit={saveSettings}>
+    <form>
       <div>
         <label for="pocus_minutes">Pocus Minutes</label>
         <input
@@ -257,7 +282,7 @@
           bind:value={settings.pocus_numTillLongBreak}
         />
       </div>
-      <button type="submit">Save</button>
+      <p>Settings saved after pocus is completed</p>
     </form>
     <button class="settings__close" on:click={toggleSettingsVisible}
       ><Icon data={times} scale="3" /></button
@@ -267,11 +292,10 @@
 
 <style lang="scss">
   :root {
-    --clr-primary: #2cc09c;
-    --clr-done: #5b54ca;
-    --clr-todo: #ffcb5f;
-    --clr-progress: #f26950;
+    --clr-break: #2cc09c;
+    --clr-pocus: #5b54ca;
     --clr-mute: #e9e9e9;
+    --clr-mute-text: #b6b6b6;
     --transition-time: 500ms;
   }
 
@@ -284,7 +308,7 @@
     justify-content: center;
 
     & > h1 {
-      color: var(--clr-done);
+      color: var(--clr-pocus);
       text-transform: uppercase;
       font-size: 4em;
       font-weight: 100;
@@ -299,7 +323,7 @@
 
   .timer {
     border-radius: 50%;
-    border: 5px solid var(--clr-done);
+    // border: 5px solid var(--clr-pocus);
     height: 20rem;
     width: 20rem;
     display: flex;
@@ -308,13 +332,14 @@
     transition: all var(--transition-time) ease;
     position: relative;
     bottom: 0;
+    background: conic-gradient(var(--clr-pocus) 100%, var(--clr-mute) 0);
 
     &--active {
       bottom: 10rem;
     }
 
     &--break {
-      border-color: var(--clr-primary);
+      border-color: var(--clr-break);
     }
   }
 
@@ -334,6 +359,12 @@
   ul {
     padding: 0;
     display: flex;
+    background: #ffffff;
+    width: 97%;
+    height: 97%;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
   }
 
   li {
@@ -369,7 +400,7 @@
       text-align: center;
       margin: 0;
       margin-bottom: 0.75rem;
-      color: var(--clr-done);
+      color: var(--clr-pocus);
       text-transform: uppercase;
       font-weight: 200;
     }
@@ -378,13 +409,15 @@
       display: flex;
       flex-wrap: wrap;
       position: relative;
-      padding-bottom: 3.5rem;
       justify-content: center;
+      padding-bottom: 1rem;
 
       & > div {
         margin: 0 1rem 0.5rem;
+        flex: 1 1 0px;
         & > label {
           text-align: center;
+          white-space: nowrap;
         }
 
         & > input {
@@ -392,16 +425,11 @@
         }
       }
 
-      & > button {
+      & > p {
+        font-size: 0.9rem;
+        color: var(--clr-mute-text);
         position: absolute;
-        bottom: 0;
-        background-color: var(--clr-primary);
-        border: none;
-        padding: 0.5rem 2rem;
-        font-size: 1.1rem;
-        font-weight: 500;
-        border-radius: 2rem;
-        color: #ffffff;
+        bottom: -0.9rem;
       }
     }
 
