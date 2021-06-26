@@ -224,7 +224,7 @@
     class={settingsVisible ? "settings" : "settings settings__hidden"}
   >
     <h2>Settings</h2>
-    <form>
+    <form on:submit={saveSettings}>
       <div>
         <label for="pocus_minutes">Pocus Minutes</label>
         <input
@@ -282,7 +282,8 @@
           bind:value={settings.pocus_numTillLongBreak}
         />
       </div>
-      <p>Settings saved after pocus is completed</p>
+      <p>Settings also saved after pocus is completed</p>
+      <button type="submit">Save and Refresh</button>
     </form>
     <button class="settings__close" on:click={toggleSettingsVisible}
       ><Icon data={times} scale="3" /></button
@@ -410,7 +411,7 @@
       flex-wrap: wrap;
       position: relative;
       justify-content: center;
-      padding-bottom: 1rem;
+      padding-bottom: 4rem;
 
       & > div {
         margin: 0 1rem 0.5rem;
@@ -425,11 +426,22 @@
         }
       }
 
+      & > button {
+        position: absolute;
+        bottom: 1rem;
+        background-color: var(--clr-break);
+        border: none;
+        padding: 0.5rem 2rem;
+        font-size: 1.1rem;
+        font-weight: 500;
+        border-radius: 2rem;
+        color: #ffffff;
+      }
       & > p {
         font-size: 0.9rem;
         color: var(--clr-mute-text);
         position: absolute;
-        bottom: -0.9rem;
+        bottom: -1.25rem;
       }
     }
 
