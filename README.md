@@ -1,5 +1,5 @@
-<div style="display:flex;align-items:center;justify-content:center"><img src="public/assets/pocus_logo.svg" /></div>
-<div style="display:flex;align-items:center;justify-content:center"><h1>Pocus</h1></div>
+<p align="center"><img src="public/assets/pocus_logo.svg" /></p>
+<div align="center"><h1><u>Pocus</u></h1></div>
 
 ## Description
 
