@@ -1,5 +1,4 @@
-<img src="public/assets/pocus_logo.svg" />
-<div style="display:flex;align-items:center;justify-content:center"><h1>Pocus</h1></div>
+<div style="display:flex;flex-direction:column;align-items:center;justify-content:center"><img src="public/assets/pocus_logo.svg" /><h1>Pocus</h1></div>
 
 ## Description
 
